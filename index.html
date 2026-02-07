@@ -144,7 +144,6 @@
         // 4. Отправка всей корзины в n8n одним махом
         async function sendCartOrder() {
             const table = document.getElementById('table').value;
-            
             const itemsArray = Object.keys(cart).map(name => ({
                 name: name,
                 quantity: cart[name].qty,
@@ -166,22 +165,26 @@
                 });
         
                 if (response.ok) {
-                    tg.showPopup({ message: "Заказ принят! Ожидайте." });
+                    if (tg.isVersionAtLeast('6.2')) {
+                        tg.showPopup({ message: "Заказ успешно отправлен!" });
+                    } else {
+                        alert("Заказ успешно отправлен!");
+                    }
                     cart = {}; 
                     updateCartUI();
                 }
             } catch (e) {
-                tg.showPopup({ message: "Ошибка при отправке" });
+                console.error("Ошибка при отправке", e);
             }
         }
 
-        // 6. Функция для кнопок "Позвать" и "Счет"
+        // 5. Функция для кнопок "Позвать" и "Счет"
         async function sendServiceRequest(type) {
             const table = document.getElementById('table').value;
             const actionText = type === 'call' ? "Вызов" : "Запрос счета";
             
             const data = {
-                action: type, // 'call' или 'bill'
+                action: type,
                 table_number: table,
                 client_name: tg.initDataUnsafe.user?.username || "Guest"
             };
@@ -194,10 +197,15 @@
                 });
         
                 if (response.ok) {
-                    tg.showPopup({ message: `${actionText} отправлен!` });
+                    // Проверяем, поддерживает ли устройство красивые поп-апы
+                    if (tg.isVersionAtLeast('6.2')) {
+                        tg.showPopup({ message: `${actionText} отправлен!` });
+                    } else {
+                        alert(`${actionText} отправлен!`); // Простой запасной вариант
+                    }
                 }
             } catch (e) {
-                tg.showPopup({ message: "Ошибка связи с сервером" });
+                console.error("Ошибка сети", e);
             }
         }
         // Запуск приложения
