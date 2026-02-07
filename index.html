@@ -48,6 +48,10 @@
     </style>
 </head>
 <body>
+    <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 20px;">
+        <button onclick="sendServiceRequest('call')" style="flex: 1; background-color: #f39c12; margin: 0; padding: 10px;">🙋‍♂️ Позвать</button>
+        <button onclick="sendServiceRequest('bill')" style="flex: 1; background-color: #27ae60; margin: 0; padding: 10px;">💳 Счет</button>
+    </div>
     <h2>Заказ в кальянную</h2>
     
     <label for="table">Выберите стол:</label>
@@ -130,6 +134,30 @@
         
         // Запускаем загрузку меню
         loadMenu();
+        async function sendServiceRequest(type) {
+            const table = document.getElementById('table').value;
+            const actionText = type === 'call' ? "Вызов" : "Запрос счета";
+            
+            const data = {
+                action: type, 
+                table_number: table,
+                client_name: tg.initDataUnsafe.user?.username || "Guest"
+            };
+        
+            try {
+                const response = await fetch(SEND_ORDER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+        
+                if (response.ok) {
+                    tg.showPopup({ message: `${actionText} отправлен!` });
+                }
+            } catch (e) {
+                tg.showPopup({ message: "Ошибка сети" });
+            }
+        }
     </script>
 </body>
 </html>
