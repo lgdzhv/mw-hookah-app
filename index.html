@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html> -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -73,56 +73,30 @@
         const SEND_ORDER_URL = 'https://paulbatona.app.n8n.cloud/webhook/hookah-order';
         
         tg.expand();
+
+        let cart = {}; // Объект для хранения товаров в корзине
         
-        // Функция для загрузки меню при открытии приложения
-        async function loadMenu() {
-            try {
-                const response = await fetch(GET_MENU_URL);
-                const menuItems = await response.json();
-                
-                const menuContainer = document.getElementById('menu');
-                menuContainer.innerHTML = ''; // Очищаем тестовый текст
-        
-                menuItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'menu-item';
-                    div.innerHTML = `
-                        <span>${item.name} — ${item.price}₽</span>
-                        <button onclick="sendOrder('${item.name}', ${item.price})">Заказать</button>
-                    `;
-                    menuContainer.appendChild(div);
-                });
-            } catch (e) {
-                console.error("Ошибка загрузки меню", e);
-            }
-        }
-        
-        // Функция отправки заказа
+        // 1. Загрузка меню из Google Таблиц
         async function loadMenu() {
             try {
                 const response = await fetch(GET_MENU_URL);
                 let menuItems = await response.json();
                 
-                console.log("Данные из n8n:", menuItems); // Обязательно посмотри это в консоли F12!
-        
                 const dataArray = Array.isArray(menuItems) ? menuItems : [menuItems];
                 const menuContainer = document.getElementById('menu');
                 menuContainer.innerHTML = ''; 
         
                 dataArray.forEach(item => {
-                    // n8n может прятать данные в поле "json" или отдавать напрямую
                     const rawData = item.json ? item.json : item;
-                    
-                    // Проверяем все варианты написания (с большой буквы, с маленькой, и т.д.)
-                    const name = rawData["наименование"] || rawData["Наименование"] || rawData["Name"];
-                    const price = rawData["цена"] || rawData["Цена"] || rawData["Price"];
+                    const name = rawData["наименование"] || rawData["Наименование"];
+                    const price = rawData["цена"] || rawData["Цена"];
         
                     if (name) {
                         const div = document.createElement('div');
                         div.className = 'menu-item';
                         div.innerHTML = `
-                            <span>${name} — ${price || 0}₽</span>
-                            <button onclick="sendOrder('${name}', ${price || 0})">Заказать</button>
+                            <span>${name} — ${price}₽</span>
+                            <button onclick="addToCart('${name}', ${price})">Добавить</button>
                         `;
                         menuContainer.appendChild(div);
                     }
@@ -132,16 +106,56 @@
             }
         }
         
-        // Запускаем загрузку меню
-        loadMenu();
-        async function sendServiceRequest(type) {
-            const table = document.getElementById('table').value;
-            const actionText = type === 'call' ? "Вызов" : "Запрос счета";
+        // 2. Логика добавления в корзину
+        function addToCart(name, price) {
+            if (cart[name]) {
+                cart[name].qty += 1;
+            } else {
+                cart[name] = { price: price, qty: 1 };
+            }
+            updateCartUI();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
+        }
+        
+        // 3. Обновление внешнего вида корзины
+        function updateCartUI() {
+            const container = document.getElementById('cart-container');
+            const list = document.getElementById('cart-items-list');
+            const totalEl = document.getElementById('cart-total');
             
+            let total = 0;
+            let itemsHtml = "";
+            const itemsKeys = Object.keys(cart);
+        
+            if (itemsKeys.length > 0) {
+                container.style.display = "block";
+                itemsKeys.forEach(name => {
+                    const item = cart[name];
+                    total += item.price * item.qty;
+                    itemsHtml += `<div>${name} x${item.qty}</div>`;
+                });
+                list.innerHTML = itemsHtml;
+                totalEl.innerText = total;
+            } else {
+                container.style.display = "none";
+            }
+        }
+        
+        // 4. Отправка всей корзины в n8n одним махом
+        async function sendCartOrder() {
+            const table = document.getElementById('table').value;
+            
+            const itemsArray = Object.keys(cart).map(name => ({
+                name: name,
+                quantity: cart[name].qty,
+                price: cart[name].price
+            }));
+        
             const data = {
-                action: type, 
+                action: "new_order",
                 table_number: table,
-                client_name: tg.initDataUnsafe.user?.username || "Guest"
+                client_name: tg.initDataUnsafe.user?.username || "Guest",
+                items: itemsArray
             };
         
             try {
@@ -152,12 +166,24 @@
                 });
         
                 if (response.ok) {
-                    tg.showPopup({ message: `${actionText} отправлен!` });
+                    tg.showPopup({ message: "Заказ принят! Ожидайте." });
+                    cart = {}; 
+                    updateCartUI();
                 }
             } catch (e) {
-                tg.showPopup({ message: "Ошибка сети" });
+                tg.showPopup({ message: "Ошибка при отправке" });
             }
         }
+        
+        // Запуск приложения
+        loadMenu();
     </script>
+    <div id="cart-container" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; padding: 15px; box-sizing: border-box; border-top-left-radius: 15px; border-top-right-radius: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Итого: <span id="cart-total">0</span>₽</span>
+            <button onclick="sendCartOrder()" style="margin: 0; background: #27ae60; padding: 8px 20px;">Заказать всё</button>
+        </div>
+        <div id="cart-items-list" style="font-size: 12px; color: #bdc3c7; max-height: 80px; overflow-y: auto;"></div>
+    </div>
 </body>
 </html>
