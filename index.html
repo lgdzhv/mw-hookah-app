@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -30,6 +30,21 @@
             width: 100%;
             margin-bottom: 20px;
         }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+        }
+        .menu-item button {
+            margin: 0;
+            padding: 5px 15px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -50,44 +65,58 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем приложение на весь экран
+        const tg = window.Telegram.WebApp;
+        const GET_MENU_URL = 'https://paulbatona.app.n8n.cloud/webhook/get-menu';
+        const SEND_ORDER_URL = 'https://paulbatona.app.n8n.cloud/webhook/hookah-order';
 
-        const WEBHOOK_URL = 'https://paulbatona.app.n8n.cloud/webhook/hookah-order';
+        tg.expand();
 
-        document.getElementById('orderBtn').addEventListener('click', async () => {
+        // Функция для загрузки меню при открытии приложения
+        async function loadMenu() {
+            try {
+                const response = await fetch(GET_MENU_URL);
+                const menuItems = await response.json();
+        
+                const menuContainer = document.getElementById('menu');
+                menuContainer.innerHTML = ''; // Очищаем тестовый текст
+
+                menuItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'menu-item';
+                    div.innerHTML = `
+                        <span>${item.name} — ${item.price}₽</span>
+                        <button onclick="sendOrder('${item.name}', ${item.price})">Заказать</button>
+                    `;
+                    menuContainer.appendChild(div);
+                });
+            } catch (e) {
+                console.error("Ошибка загрузки меню", e);
+            }
+        }
+
+        // Функция отправки заказа
+        async function sendOrder(itemName, itemPrice) {
             const table = document.getElementById('table').value;
-            
-            // Собираем данные для n8n
             const data = {
                 action: "new_order",
                 table_number: table,
                 client_name: tg.initDataUnsafe.user?.username || "Guest",
-                items: [
-                    {
-                        name: "Кальян Classic",
-                        quantity: 1,
-                        price: 1200
-                    }
-                ]
+                items: [{ name: itemName, quantity: 1, price: itemPrice }]
             };
 
-            // Отправляем на бэкенд (n8n)
-            try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+            const response = await fetch(SEND_ORDER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
 
-                if (response.ok) {
-                    tg.showPopup({ message: "Заказ отправлен!" }, () => tg.close());
-                } else {
-                    tg.showPopup({ message: "Ошибка сервера" });
-                }
-            } catch (e) {
-                tg.showPopup({ message: "Ошибка сети" });
+            if (response.ok) {
+                tg.showPopup({ message: `Заказ на ${itemName} принят!` });
             }
-        });
+        }
+
+        // Запускаем загрузку меню
+        loadMenu();
     </script>
 </body>
 </html>
