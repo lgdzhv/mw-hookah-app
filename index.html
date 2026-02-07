@@ -94,23 +94,37 @@
         }
         
         // Функция отправки заказа
-        async function sendOrder(itemName, itemPrice) {
-            const table = document.getElementById('table').value;
-            const data = {
-                action: "new_order",
-                table_number: table,
-                client_name: tg.initDataUnsafe.user?.username || "Guest",
-                items: [{ name: itemName, quantity: 1, price: itemPrice }]
-            };
+        async function loadMenu() {
+            try {
+                const response = await fetch(GET_MENU_URL);
+                let menuItems = await response.json();
+                
+                console.log("Данные из n8n:", menuItems); // Обязательно посмотри это в консоли F12!
         
-            const response = await fetch(SEND_ORDER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+                const dataArray = Array.isArray(menuItems) ? menuItems : [menuItems];
+                const menuContainer = document.getElementById('menu');
+                menuContainer.innerHTML = ''; 
         
-            if (response.ok) {
-                tg.showPopup({ message: `Заказ на ${itemName} принят!` });
+                dataArray.forEach(item => {
+                    // n8n может прятать данные в поле "json" или отдавать напрямую
+                    const rawData = item.json ? item.json : item;
+                    
+                    // Проверяем все варианты написания (с большой буквы, с маленькой, и т.д.)
+                    const name = rawData["наименование"] || rawData["Наименование"] || rawData["Name"];
+                    const price = rawData["цена"] || rawData["Цена"] || rawData["Price"];
+        
+                    if (name) {
+                        const div = document.createElement('div');
+                        div.className = 'menu-item';
+                        div.innerHTML = `
+                            <span>${name} — ${price || 0}₽</span>
+                            <button onclick="sendOrder('${name}', ${price || 0})">Заказать</button>
+                        `;
+                        menuContainer.appendChild(div);
+                    }
+                });
+            } catch (e) {
+                console.error("Ошибка загрузки меню", e);
             }
         }
         
