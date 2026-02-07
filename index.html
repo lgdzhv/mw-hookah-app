@@ -174,7 +174,32 @@
                 tg.showPopup({ message: "Ошибка при отправке" });
             }
         }
+
+        // 6. Функция для кнопок "Позвать" и "Счет"
+        async function sendServiceRequest(type) {
+            const table = document.getElementById('table').value;
+            const actionText = type === 'call' ? "Вызов" : "Запрос счета";
+            
+            const data = {
+                action: type, // 'call' или 'bill'
+                table_number: table,
+                client_name: tg.initDataUnsafe.user?.username || "Guest"
+            };
         
+            try {
+                const response = await fetch(SEND_ORDER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+        
+                if (response.ok) {
+                    tg.showPopup({ message: `${actionText} отправлен!` });
+                }
+            } catch (e) {
+                tg.showPopup({ message: "Ошибка связи с сервером" });
+            }
+        }
         // Запуск приложения
         loadMenu();
     </script>
