@@ -60,7 +60,18 @@
         <option value="2">Стол №2</option>
         <option value="3">Стол №3</option>
     </select>
+    
+    <div id="menu-container" class="menu"></div>
 
+    <div id="cart-container" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; padding: 15px; box-sizing: border-box; border-top-left-radius: 15px; border-top-right-radius: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Итого: <span id="cart-total">0</span>₽</span>
+            <button onclick="sendCartOrder()" style="margin: 0; background: #27ae60; padding: 8px 20px;">Заказать всё</button>
+        </div>
+        <div id="cart-items-list" style="font-size: 12px; color: #bdc3c7; max-height: 80px; overflow-y: auto;"></div>
+    </div>
+    <div id="cart-items"></div>
+    
     <script>
         const tg = window.Telegram.WebApp;
         const GET_MENU_URL = 'https://paulbatona.app.n8n.cloud/webhook/get-menu';
@@ -205,13 +216,5 @@
         // Запуск приложения
         loadMenu();
     </script>
-    <div id="cart-container" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; padding: 15px; box-sizing: border-box; border-top-left-radius: 15px; border-top-right-radius: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span style="font-weight: bold;">Итого: <span id="cart-total">0</span>₽</span>
-            <button onclick="sendCartOrder()" style="margin: 0; background: #27ae60; padding: 8px 20px;">Заказать всё</button>
-        </div>
-        <div id="cart-items-list" style="font-size: 12px; color: #bdc3c7; max-height: 80px; overflow-y: auto;"></div>
-    </div>
-    <div id="cart-items"></div>
 </body>
 </html>
