@@ -6,156 +6,123 @@
     <title>Hookah App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* 1. ГЛОБАЛЬНЫЕ СТИЛИ И МЕНЮ (Твоя база) */
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            margin: 0;
+            padding-bottom: 250px; /* Отступ снизу, чтобы корзина не закрывала последние товары */
         }
-        button {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+    
         select {
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             margin-bottom: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
         }
+    
         .menu-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            background: rgba(255,255,255,0.1);
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            margin: 8px 0;
+            border-radius: 12px;
         }
-        .menu-item button {
-            margin: 0;
-            padding: 5px 15px;
-            font-size: 14px;
-        }
-                
-        /* Стили для названия товара */
-        .item-name {
-            flex-grow: 1; /* Занимает все свободное место слева */
-            margin-right: 15px; /* Отступ от кнопок */
-            font-size: 16px;
-            font-weight: 500;
-        }
-        
-        /* Общий контейнер корзины (белая плашка внизу) */
+    
+        /* 2. ИСПРАВЛЕННАЯ КОРЗИНА (Мой фикс для кнопок и текста) */
         #cart-container {
-            background: white;
-            border-radius: 20px 20px 0 0;
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: #ffffff; /* Белый фон, чтобы текст всегда был виден */
+            color: #222222; /* Темный текст для контраста */
             padding: 20px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            position: sticky; /* Чтобы корзина всегда была видна при скролле основного меню */
-            bottom: 0;
-            z-index: 100;
+            box-sizing: border-box;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
         }
-        
-        /* Заголовок "Ваш заказ" */
+    
         .cart-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f2f2f7;
-        }
-        
-        .cart-header h3 { margin: 0; font-size: 18px; }
-        
-        /* СПИСОК ТОВАРОВ - ТЕПЕРЬ СО СКРОЛЛОМ */
-        #cart-items-list {
-            max-height: 160px; /* Ограничиваем высоту, чтобы появился скролл */
-            overflow-y: auto;  /* Включаем прокрутку */
             margin-bottom: 10px;
-            padding-right: 5px;
         }
-        
-        /* Стиль каждой строки товара */
+    
+        .cart-header h3 { margin: 0; font-size: 18px; color: #222; }
+    
+        #cart-items-list {
+            max-height: 160px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    
+        /* Каждая строка товара в корзине */
         .cart-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px solid #f9f9f9;
+            border-bottom: 1px solid #f2f2f7;
         }
+    
+        /* ФИКС КНОПОК: Теперь они точно будут круглыми */
+        .item-controls { display: flex; align-items: center; gap: 12px; }
         
-        .item-name { flex: 1; font-size: 15px; }
-        
-        /* Кнопки + и - */
-        .item-controls { display: flex; align-items: center; gap: 10px; }
         .item-controls button {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 32px !important;
+            height: 32px !important;
+            min-width: 32px !important;
+            border-radius: 50% !important;
+            border: none !important;
+            background: #007aff !important; /* Синий Telegram */
+            color: #ffffff !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 20px;
+            margin: 15px 0;
+            color: #222;
+        }
+    
+        .btn-order {
+            width: 100%;
+            background: #007aff;
+            color: white;
             border: none;
-            background: #f2f2f7;
-            color: #007aff;
-            font-size: 18px;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: bold;
         }
-        
-        /* Подсказка про скролл */
+    
         .scroll-hint {
             text-align: center;
             font-size: 11px;
             color: #8e8e93;
-            padding: 5px 0;
-            animation: fadePulse 2s infinite; /* Плавное мигание, чтобы привлечь внимание */
+            padding-bottom: 5px;
         }
-        
-        @keyframes fadePulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
-        
-        /* Стили для кнопок + и - */
-        .item-controls button {
-            width: 40px; /* Крупный размер для удобного нажатия пальцем */
-            height: 40px;
-            border: none;
-            background-color: #f2f2f7; /* Светло-серый фон в стиле iOS */
-            color: #007aff; /* Фирменный синий цвет Telegram */
-            font-size: 22px; /* Крупный шрифт символов */
-            font-weight: 400;
-            border-radius: 50%; /* Делаем кнопки идеально круглыми */
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.2s ease; /* Плавный эффект при нажатии */
-            /* Убираем задержку нажатия на мобильных */
-            touch-action: manipulation;
-        }
-        
-        /* Эффект при нажатии на кнопку */
-        .item-controls button:active {
-            background-color: #e5e5ea; /* Чуть темнее при тапе */
-        }
-        
-        /* Стили для цифры количества */
-        .item-controls span {
-            font-size: 18px;
-            font-weight: 600;
-            min-width: 24px; /* Чтобы цифра не "прыгала" при изменении */
-            text-align: center;
-        }
-    </style>
+</style>
 </head>
 <body>
     <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 20px;">
@@ -184,11 +151,11 @@
     
         <div id="cart-items-list"></div>
         
-        <div class="scroll-hint" id="scroll-hint" style="display: none;">↓ Листайте вниз ↓</div>
+        <div class="scroll-hint" id="scroll-hint">↓ Листайте вниз ↓</div>
     
         <div class="cart-footer">
             <div class="total-row">
-                <span>Итого:</span>
+                <span>Итого к оплате:</span>
                 <span><span id="cart-total">0</span>₽</span>
             </div>
             <button class="btn-order" onclick="sendCartOrder()">Заказать всё</button>
@@ -278,20 +245,18 @@
                     total += item.price * item.qty;
                     itemCount += item.qty;
                     itemsHtml += `
-                        <div class="cart-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #34495e;">
-                            <span>${name}</span>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <button onclick="removeFromCart('${name}')" style="width:24px; height:24px; border-radius:50%; border:none; background:#ecf0f1;">-</button>
-                                <span>${item.qty}</span>
-                                <button onclick="addToCart('${name}', ${item.price})" style="width:24px; height:24px; border-radius:50%; border:none; background:#ecf0f1;">+</button>
+                        <div class="cart-item">
+                            <span style="color:#222">${name}</span>
+                            <div class="item-controls" style="display:flex; align-items:center; gap:12px;">
+                                <button onclick="removeFromCart('${name}')">-</button>
+                                <span style="color:#222; font-weight:bold; min-width:20px; text-align:center">${item.qty}</span>
+                                <button onclick="addToCart('${name}', ${item.price})">+</button>
                             </div>
                         </div>`;
                 });
                 list.innerHTML = itemsHtml;
                 totalEl.innerText = total;
                 countEl.innerText = itemCount + " шт.";
-                
-                // Показываем подсказку, если в корзине больше 3 уникальных позиций
                 hint.style.display = itemsKeys.length > 3 ? "block" : "none";
             } else {
                 container.style.display = "none";
