@@ -45,6 +45,61 @@
             padding: 5px 15px;
             font-size: 14px;
         }
+        /* Стили для элемента корзины */
+        .cart-item {
+            display: flex;
+            justify-content: space-between; /* Название слева, кнопки справа */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            padding: 12px 0; /* Отступы сверху и снизу для "воздуха" */
+            border-bottom: 1px solid #eee; /* Тонкая линия-разделитель между товарами */
+        }
+        
+        /* Стили для названия товара */
+        .item-name {
+            flex-grow: 1; /* Занимает все свободное место слева */
+            margin-right: 15px; /* Отступ от кнопок */
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* Контейнер для кнопок управления и количества */
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px; /* Расстояние между минусом, цифрой и плюсом */
+        }
+        
+        /* Стили для кнопок + и - */
+        .item-controls button {
+            width: 40px; /* Крупный размер для удобного нажатия пальцем */
+            height: 40px;
+            border: none;
+            background-color: #f2f2f7; /* Светло-серый фон в стиле iOS */
+            color: #007aff; /* Фирменный синий цвет Telegram */
+            font-size: 22px; /* Крупный шрифт символов */
+            font-weight: 400;
+            border-radius: 50%; /* Делаем кнопки идеально круглыми */
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease; /* Плавный эффект при нажатии */
+            /* Убираем задержку нажатия на мобильных */
+            touch-action: manipulation;
+        }
+        
+        /* Эффект при нажатии на кнопку */
+        .item-controls button:active {
+            background-color: #e5e5ea; /* Чуть темнее при тапе */
+        }
+        
+        /* Стили для цифры количества */
+        .item-controls span {
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 24px; /* Чтобы цифра не "прыгала" при изменении */
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -122,12 +177,25 @@
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
         }
         
-        // 3. Обновление внешнего вида корзины
+        // 3. Логика удаления из корзины
+        function removeFromCart(name) {
+            if (cart[name]) {
+                if (cart[name].qty > 1) {
+                    cart[name].qty -= 1;
+                } else {
+                    delete cart[name]; // Если товар один, удаляем его совсем
+                }
+                updateCartUI();
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        // 4. Обновление внешнего вида корзины
         function updateCartUI() {
             const container = document.getElementById('cart-container');
             const list = document.getElementById('cart-items-list');
             const totalEl = document.getElementById('cart-total');
-            
+        
             let total = 0;
             let itemsHtml = "";
             const itemsKeys = Object.keys(cart);
@@ -137,7 +205,16 @@
                 itemsKeys.forEach(name => {
                     const item = cart[name];
                     total += item.price * item.qty;
-                    itemsHtml += `<div>${name} x${item.qty}</div>`;
+                    // Добавляем кнопки + и - прямо в строку товара
+                    itemsHtml += `
+                        <div class="cart-item">
+                            <span class="item-name">${name}</span>
+                            <div class="item-controls">
+                                <button onclick="removeFromCart('${name}')">-</button>
+                                <span>${item.qty}</span>
+                                <button onclick="addToCart('${name}', ${item.price})">+</button>
+                            </div>
+                        </div>`;
                 });
                 list.innerHTML = itemsHtml;
                 totalEl.innerText = total;
@@ -146,7 +223,7 @@
             }
         }
         
-        // 4. Отправка всей корзины в n8n одним махом
+        // 5. Отправка всей корзины в n8n одним махом
         async function sendCartOrder() {
             const table = document.getElementById('table').value;
             const itemsArray = Object.keys(cart).map(name => ({
@@ -183,7 +260,7 @@
             }
         }
 
-        // 5. Функция для кнопок "Позвать" и "Счет"
+        // 6. Функция для кнопок "Позвать" и "Счет"
         async function sendServiceRequest(type) {
             const table = document.getElementById('table').value;
             const actionText = type === 'call' ? "Вызов" : "Запрос счета";
