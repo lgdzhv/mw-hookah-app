@@ -45,15 +45,7 @@
             padding: 5px 15px;
             font-size: 14px;
         }
-        /* Стили для элемента корзины */
-        .cart-item {
-            display: flex;
-            justify-content: space-between; /* Название слева, кнопки справа */
-            align-items: center; /* Вертикальное выравнивание по центру */
-            padding: 12px 0; /* Отступы сверху и снизу для "воздуха" */
-            border-bottom: 1px solid #eee; /* Тонкая линия-разделитель между товарами */
-        }
-        
+                
         /* Стили для названия товара */
         .item-name {
             flex-grow: 1; /* Занимает все свободное место слева */
@@ -62,11 +54,74 @@
             font-weight: 500;
         }
         
-        /* Контейнер для кнопок управления и количества */
-        .item-controls {
+        /* Общий контейнер корзины (белая плашка внизу) */
+        #cart-container {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            position: sticky; /* Чтобы корзина всегда была видна при скролле основного меню */
+            bottom: 0;
+            z-index: 100;
+        }
+        
+        /* Заголовок "Ваш заказ" */
+        .cart-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px; /* Расстояние между минусом, цифрой и плюсом */
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f2f2f7;
+        }
+        
+        .cart-header h3 { margin: 0; font-size: 18px; }
+        
+        /* СПИСОК ТОВАРОВ - ТЕПЕРЬ СО СКРОЛЛОМ */
+        #cart-items-list {
+            max-height: 160px; /* Ограничиваем высоту, чтобы появился скролл */
+            overflow-y: auto;  /* Включаем прокрутку */
+            margin-bottom: 10px;
+            padding-right: 5px;
+        }
+        
+        /* Стиль каждой строки товара */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f9f9f9;
+        }
+        
+        .item-name { flex: 1; font-size: 15px; }
+        
+        /* Кнопки + и - */
+        .item-controls { display: flex; align-items: center; gap: 10px; }
+        .item-controls button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f2f2f7;
+            color: #007aff;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Подсказка про скролл */
+        .scroll-hint {
+            text-align: center;
+            font-size: 11px;
+            color: #8e8e93;
+            padding: 5px 0;
+            animation: fadePulse 2s infinite; /* Плавное мигание, чтобы привлечь внимание */
+        }
+        
+        @keyframes fadePulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
         }
         
         /* Стили для кнопок + и - */
@@ -107,25 +162,38 @@
         <button onclick="sendServiceRequest('call')" style="flex: 1; background-color: #f39c12; margin: 0; padding: 10px;">🙋‍♂️ Позвать</button>
         <button onclick="sendServiceRequest('bill')" style="flex: 1; background-color: #27ae60; margin: 0; padding: 10px;">💳 Счет</button>
     </div>
-    <h2>Заказ в кальянную</h2>
+    <h2>Marivanna Elista</h2>
     
     <label for="table">Выберите стол:</label>
     <select id="table">
         <option value="1">Стол №1</option>
         <option value="2">Стол №2</option>
         <option value="3">Стол №3</option>
+        <option value="3">Стол №4</option>
+        <option value="3">Стол №5</option>
+        <option value="3">Стол №6</option>
     </select>
     
     <div id="menu-container" class="menu"></div>
 
-    <div id="cart-container" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; padding: 15px; box-sizing: border-box; border-top-left-radius: 15px; border-top-right-radius: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span style="font-weight: bold;">Итого: <span id="cart-total">0</span>₽</span>
-            <button onclick="sendCartOrder()" style="margin: 0; background: #27ae60; padding: 8px 20px;">Заказать всё</button>
+    <div id="cart-container" style="display: none;">
+        <div class="cart-header">
+            <h3>Ваш заказ</h3>
+            <span id="items-count">0 шт.</span>
         </div>
-        <div id="cart-items-list" style="font-size: 12px; color: #bdc3c7; max-height: 80px; overflow-y: auto;"></div>
+    
+        <div id="cart-items-list"></div>
+        
+        <div class="scroll-hint" id="scroll-hint" style="display: none;">↓ Листайте вниз ↓</div>
+    
+        <div class="cart-footer">
+            <div class="total-row">
+                <span>Итого:</span>
+                <span><span id="cart-total">0</span>₽</span>
+            </div>
+            <button class="btn-order" onclick="sendCartOrder()">Заказать всё</button>
+        </div>
     </div>
-    <div id="cart-items"></div>
     
     <script>
         const tg = window.Telegram.WebApp;
@@ -195,8 +263,11 @@
             const container = document.getElementById('cart-container');
             const list = document.getElementById('cart-items-list');
             const totalEl = document.getElementById('cart-total');
+            const countEl = document.getElementById('items-count');
+            const hint = document.getElementById('scroll-hint');
         
             let total = 0;
+            let itemCount = 0;
             let itemsHtml = "";
             const itemsKeys = Object.keys(cart);
         
@@ -205,19 +276,23 @@
                 itemsKeys.forEach(name => {
                     const item = cart[name];
                     total += item.price * item.qty;
-                    // Добавляем кнопки + и - прямо в строку товара
+                    itemCount += item.qty;
                     itemsHtml += `
-                        <div class="cart-item">
-                            <span class="item-name">${name}</span>
-                            <div class="item-controls">
-                                <button onclick="removeFromCart('${name}')">-</button>
+                        <div class="cart-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #34495e;">
+                            <span>${name}</span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <button onclick="removeFromCart('${name}')" style="width:24px; height:24px; border-radius:50%; border:none; background:#ecf0f1;">-</button>
                                 <span>${item.qty}</span>
-                                <button onclick="addToCart('${name}', ${item.price})">+</button>
+                                <button onclick="addToCart('${name}', ${item.price})" style="width:24px; height:24px; border-radius:50%; border:none; background:#ecf0f1;">+</button>
                             </div>
                         </div>`;
                 });
                 list.innerHTML = itemsHtml;
                 totalEl.innerText = total;
+                countEl.innerText = itemCount + " шт.";
+                
+                // Показываем подсказку, если в корзине больше 3 уникальных позиций
+                hint.style.display = itemsKeys.length > 3 ? "block" : "none";
             } else {
                 container.style.display = "none";
             }
