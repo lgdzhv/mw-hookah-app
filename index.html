@@ -88,7 +88,7 @@
                 let menuItems = await response.json();
                 
                 const dataArray = Array.isArray(menuItems) ? menuItems : [menuItems];
-                const menuContainer = document.getElementById('menu');
+                const menuContainer = document.getElementById('menu-container');
                 menuContainer.innerHTML = ''; 
         
                 dataArray.forEach(item => {
