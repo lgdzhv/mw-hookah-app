@@ -16,7 +16,10 @@
             align-items: center;
             padding: 20px;
             margin: 0;
-            padding-bottom: 250px; /* Отступ снизу, чтобы корзина не закрывала последние товары */
+            /* Начальный маленький отступ */
+            padding-bottom: 20px; 
+            /* Плавное изменение отступа */
+            transition: padding-bottom 0.3s ease; 
         }
     
         select {
@@ -250,27 +253,38 @@
             const itemsKeys = Object.keys(cart);
         
             if (itemsKeys.length > 0) {
+                // 1. Показываем корзину
                 container.style.display = "block";
+                
+                // 2. ДОБАВЛЯЕМ ОТСТУП у body, чтобы меню не перекрывалось
+                document.body.style.paddingBottom = "320px"; 
+        
                 itemsKeys.forEach(name => {
                     const item = cart[name];
                     total += item.price * item.qty;
                     itemCount += item.qty;
                     itemsHtml += `
                         <div class="cart-item">
-                            <span style="color:#222">${name}</span>
-                            <div class="item-controls" style="display:flex; align-items:center; gap:12px;">
+                            <span>${name}</span>
+                            <div class="item-controls">
                                 <button onclick="removeFromCart('${name}')">-</button>
-                                <span style="color:#222; font-weight:bold; min-width:20px; text-align:center">${item.qty}</span>
+                                <span>${item.qty}</span>
                                 <button onclick="addToCart('${name}', ${item.price})">+</button>
                             </div>
                         </div>`;
                 });
+                
                 list.innerHTML = itemsHtml;
                 totalEl.innerText = total;
                 countEl.innerText = itemCount + " шт.";
+                
+                // Показываем подсказку, если товаров больше 3
                 hint.style.display = itemsKeys.length > 3 ? "block" : "none";
+        
             } else {
+                // 3. СКРЫВАЕМ КОРЗИНУ и убираем отступ у body
                 container.style.display = "none";
+                document.body.style.paddingBottom = "20px";
             }
         }
         
