@@ -47,13 +47,23 @@
         #cart-container {
             position: fixed;
             bottom: 0; left: 0; width: 100%;
-            background: #ffffff; /* Белый фон, чтобы текст всегда был виден */
-            color: #222222; /* Темный текст для контраста */
+            background: #ffffff;
+            color: #222;
             padding: 20px;
             box-sizing: border-box;
             border-radius: 24px 24px 0 0;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
             z-index: 9999;
+            /* Плавность: трансформация за 0.4 секунды с "пружинистым" эффектом */
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        /* Класс для "схлопывания" */
+        #cart-container.collapsed {
+            transform: translateY(100%); /* Улетает вниз за край экрана */
+            opacity: 0;
         }
     
         .cart-header {
@@ -282,15 +292,20 @@
                 hint.style.display = itemsKeys.length > 3 ? "block" : "none";
         
             } else {
-                // 3. СКРЫВАЕМ КОРЗИНУ и убираем отступ у body
-                container.style.display = "none";
-                document.body.style.paddingBottom = "20px";
+                // Не скрываем мгновенно, если идет анимация схлопывания
+                if (!container.classList.contains('collapsed')) {
+                    container.style.display = "none";
+                }
+                document.body.style.paddingBottom = "40px";
             }
         }
         
         // 5. Отправка всей корзины в n8n одним махом
         async function sendCartOrder() {
+            const container = document.getElementById('cart-container');
             const table = document.getElementById('table').value;
+            
+            // Создаем массив товаров для отправки
             const itemsArray = Object.keys(cart).map(name => ({
                 name: name,
                 quantity: cart[name].qty,
@@ -312,16 +327,26 @@
                 });
         
                 if (response.ok) {
-                    if (tg.isVersionAtLeast('6.2')) {
-                        tg.showPopup({ message: "Заказ успешно отправлен!" });
-                    } else {
-                        alert("Заказ успешно отправлен!");
-                    }
-                    cart = {}; 
-                    updateCartUI();
+                    // КРАСИВОЕ СХЛОПЫВАНИЕ
+                    container.classList.add('collapsed'); // Запускаем CSS анимацию
+                    
+                    // Ждем завершения анимации (400мс)
+                    setTimeout(() => {
+                        cart = {}; // Очищаем корзину
+                        updateCartUI(); // Обновляем интерфейс (он скроет контейнер)
+                        container.classList.remove('collapsed'); // Сбрасываем класс для следующего раза
+                        
+                        // Показываем уведомление Telegram
+                        if (tg.showPopup) {
+                            tg.showPopup({ message: "🚀 Заказ успешно отправлен!" });
+                        } else {
+                            alert("Заказ успешно отправлен!");
+                        }
+                    }, 400);
                 }
             } catch (e) {
-                console.error("Ошибка при отправке", e);
+                console.error("Ошибка при отправке:", e);
+                alert("Ошибка сети, попробуйте еще раз");
             }
         }
 
