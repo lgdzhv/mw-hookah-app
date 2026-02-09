@@ -42,6 +42,27 @@
             margin: 8px 0;
             border-radius: 12px;
         }
+
+        /* Полная замена старого блока .menu-item button */
+        .menu-item button {
+            margin: 0;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: #007aff; /* Синий Telegram */
+            color: #ffffff;
+            border: none;
+            border-radius: 20px; /* Современная скругленная форма */
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.15);
+            transition: all 0.2s ease;
+            cursor: pointer; /* Оставляем для Desktop-версии */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .menu-item button:active {
+            transform: scale(0.95); /* Эффект нажатия */
+            background-color: #0062cc;
+        }
     
         /* 2. ИСПРАВЛЕННАЯ КОРЗИНА (Мой фикс для кнопок и текста) */
         #cart-container {
