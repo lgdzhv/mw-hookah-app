@@ -7,6 +7,10 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         /* 1. ГЛОБАЛЬНЫЕ СТИЛИ И МЕНЮ (Твоя база) */
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--tg-theme-bg-color);
@@ -32,14 +36,15 @@
             color: var(--tg-theme-text-color);
         }
     
+        /* 5. Карточка товара (теперь точно совпадает с заголовком) */
         .menu-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px; /* Такая же внутренняя набивка, как у заголовка */
+            margin: 8px 0; /* Такой же внешний отступ */
             border-radius: 12px;
         }
 
@@ -62,6 +67,11 @@
         .menu-item button:active {
             transform: scale(0.95); /* Эффект нажатия */
             background-color: #0062cc;
+        }
+
+        #menu-container {
+            width: 100%; /* Растягиваем на всю доступную ширину */
+            max-width: 500px; /* Ограничение для больших экранов */
         }
     
         /* 2. ИСПРАВЛЕННАЯ КОРЗИНА (Мой фикс для кнопок и текста) */
@@ -171,15 +181,15 @@
         /* Стили для заголовков категорий */
         .category-header {
             width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            margin: 8px 0; /* Такой же отступ, как у menu-item */
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
@@ -187,12 +197,12 @@
             background: rgba(255, 255, 255, 0.15);
         }
         
-        /* Контейнер для товаров (по умолчанию скрыт) */
+        /* 4. Контейнер товаров (убираем все внутренние смещения) */
         .category-content {
             display: none;
             width: 100%;
-            padding-left: 0; /* Убираем отступ, чтобы меню-итемы были вровень с заголовком */
-            animation: fadeIn 0.3s ease; /* Плавное появление списка товаров */
+            padding: 0; /* Никаких отступов слева! */
+            margin: 0;
         }
         
         @keyframes fadeIn {
