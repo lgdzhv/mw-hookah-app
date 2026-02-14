@@ -490,36 +490,37 @@
             }
         }
 
-        // 6. Функция для кнопок "Позвать" и "Счет"
-        async function sendServiceRequest(type) {
-            const table = document.getElementById('table').value;
-            const actionText = type === 'call' ? "Вызов" : "Запрос счета";
+    // 6. Обновленная функция для кнопок "Позвать" и "Счет"
+            async function sendServiceRequest(type) {
+                const table = document.getElementById('table').value;
+                const actionText = type === 'call' ? "Вызов" : "Запрос счета";
+                
+                // Теперь мы передаем и username, и цифровой ID
+                const data = {
+                    action: type,
+                    table_number: table,
+                    user_id: tg.initDataUnsafe.user?.id, // Чтобы бот знал, кому слать чек
+                    client_name: tg.initDataUnsafe.user?.username || "Guest"
+                };
             
-            const data = {
-                action: type,
-                table_number: table,
-                client_name: tg.initDataUnsafe.user?.username || "Guest"
-            };
-        
-            try {
-                const response = await fetch(SEND_ORDER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-        
-                if (response.ok) {
-                    // Проверяем, поддерживает ли устройство красивые поп-апы
-                    if (tg.isVersionAtLeast('6.2')) {
-                        tg.showPopup({ message: `${actionText} отправлен!` });
-                    } else {
-                        alert(`${actionText} отправлен!`); // Простой запасной вариант
+                try {
+                    const response = await fetch(SEND_ORDER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+            
+                    if (response.ok) {
+                        if (tg.isVersionAtLeast('6.2')) {
+                            tg.showPopup({ message: `${actionText} отправлен!` });
+                        } else {
+                            alert(`${actionText} отправлен!`);
+                        }
                     }
+                } catch (e) {
+                    console.error("Ошибка сети", e);
                 }
-            } catch (e) {
-                console.error("Ошибка сети", e);
             }
-        }
         // Запуск приложения
         loadMenu();
     </script>
