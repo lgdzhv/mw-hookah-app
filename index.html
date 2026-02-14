@@ -216,10 +216,16 @@
 
         let cart = {}; // Объект для хранения товаров в корзине
         
-        // 1. Загрузка меню из Google Таблиц
+        // 1. Загрузка меню из Google Таблиц с проверкой пользователя
         async function loadMenu() {
             try {
-                const response = await fetch(GET_MENU_URL);
+                // Получаем ник пользователя из Telegram
+                const username = tg.initDataUnsafe.user?.username || "guest";
+                
+                // Добавляем ник в URL запроса
+                const url = `${GET_MENU_URL}?user=${username}`;
+                
+                const response = await fetch(url);
                 let menuItems = await response.json();
                 
                 const dataArray = Array.isArray(menuItems) ? menuItems : [menuItems];
@@ -241,6 +247,8 @@
                         menuContainer.appendChild(div);
                     }
                 });
+                
+                console.log("Запрос отправлен для:", username);
             } catch (e) {
                 console.error("Ошибка загрузки меню", e);
             }
