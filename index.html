@@ -167,6 +167,47 @@
             40% { transform: translateY(-5px); }
             60% { transform: translateY(-3px); }
         }
+
+        /* Стили для заголовков категорий */
+        .category-header {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .category-header:active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Контейнер для товаров (по умолчанию скрыт) */
+        .category-content {
+            display: none;
+            width: 100%;
+            padding-left: 0; /* Убираем отступ, чтобы меню-итемы были вровень с заголовком */
+            animation: fadeIn 0.3s ease; /* Плавное появление списка товаров */
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }            
+        
+        /* Иконка стрелочки */
+        .category-arrow {
+            transition: transform 0.3s ease;
+        }
+        
+        .category-header.active .category-arrow {
+            transform: rotate(180deg);
+        }
 </style>
 </head>
 <body>
@@ -219,10 +260,7 @@
         // 1. Загрузка меню из Google Таблиц с проверкой пользователя
         async function loadMenu() {
             try {
-                // Получаем ник пользователя из Telegram
                 const username = tg.initDataUnsafe.user?.username || "guest";
-                
-                // Добавляем ник в URL запроса
                 const url = `${GET_MENU_URL}?user=${username}`;
                 
                 const response = await fetch(url);
@@ -232,25 +270,85 @@
                 const menuContainer = document.getElementById('menu-container');
                 menuContainer.innerHTML = ''; 
         
-                dataArray.forEach(item => {
+                // 1. Группируем товары по категориям
+                const groupedMenu = dataArray.reduce((acc, item) => {
                     const rawData = item.json ? item.json : item;
-                    const name = rawData["наименование"] || rawData["Наименование"];
-                    const price = rawData["цена"] || rawData["Цена"];
+                    const category = rawData["категория"] || rawData["Категория"] || "Прочее";
+                    
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push(rawData);
+                    return acc;
+                }, {});
         
-                    if (name) {
-                        const div = document.createElement('div');
-                        div.className = 'menu-item';
-                        div.innerHTML = `
-                            <span>${name} — ${price}₽</span>
-                            <button onclick="addToCart('${name}', ${price})">Добавить</button>
-                        `;
-                        menuContainer.appendChild(div);
-                    }
+                // 2. Отрисовываем категории и товары внутри них
+                Object.keys(groupedMenu).forEach((categoryName, index) => {
+                    const categoryId = `cat-${index}`;
+                    
+                    // Создаем заголовок категории
+                    const header = document.createElement('div');
+                    header.className = 'category-header';
+                    header.innerHTML = `
+                        <span>${categoryName}</span>
+                        <span class="category-arrow">▼</span>
+                    `;
+                    header.onclick = () => toggleCategory(categoryId, header);
+                    
+                    // Создаем контейнер для товаров этой категории
+                    const content = document.createElement('div');
+                    content.id = categoryId;
+                    content.className = 'category-content';
+                    
+                    groupedMenu[categoryName].forEach(rawData => {
+                        const name = rawData["наименование"] || rawData["Наименование"];
+                        const price = rawData["цена"] || rawData["Цена"];
+        
+                        if (name) {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'menu-item';
+                            itemDiv.innerHTML = `
+                                <span>${name} — ${price}₽</span>
+                                <button onclick="addToCart('${name}', ${price})">Добавить</button>
+                            `;
+                            content.appendChild(itemDiv);
+                        }
+                    });
+        
+                    menuContainer.appendChild(header);
+                    menuContainer.appendChild(content);
                 });
-                
-                console.log("Запрос отправлен для:", username);
+        
             } catch (e) {
                 console.error("Ошибка загрузки меню", e);
+            }
+        }
+        
+        // Функция для раскрытия/закрытия категории
+        function toggleCategory(id, header) {
+            const content = document.getElementById(id);
+            const isOpen = content.style.display === "block";
+            
+            // 1. Находим ВСЕ открытые контенты и скрываем их
+            document.querySelectorAll('.category-content').forEach(el => {
+                el.style.display = 'none';
+            });
+        
+            // 2. У ВСЕХ заголовков убираем класс 'active' (поворот стрелочки)
+            document.querySelectorAll('.category-header').forEach(el => {
+                el.classList.remove('active');
+            });
+        
+            // 3. Если категория была закрыта — открываем её
+            if (!isOpen) {
+                content.style.display = "block";
+                header.classList.add('active');
+                
+                // Плавный скролл к открытой категории (опционально)
+                header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            // Легкая вибрация при переключении
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.selectionChanged();
             }
         }
         
