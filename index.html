@@ -318,7 +318,7 @@
                             itemDiv.className = 'menu-item';
                             itemDiv.innerHTML = `
                                 <span>${name} — ${price}₽</span>
-                                <button onclick="addToCart('${name}', ${price})">Добавить</button>
+                                <button onclick="addToCart('${name}', ${price}, '${categoryName}')">Добавить</button>
                             `;
                             content.appendChild(itemDiv);
                         }
@@ -368,7 +368,7 @@
             if (cart[name]) {
                 cart[name].qty += 1;
             } else {
-                cart[name] = { price: price, qty: 1 };
+                cart[name] = { price: price, qty: 1, category: category };
             }
             updateCartUI();
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
@@ -448,7 +448,8 @@
             const itemsArray = Object.keys(cart).map(name => ({
                 name: name,
                 quantity: cart[name].qty,
-                price: cart[name].price
+                price: cart[name].price,
+                category: cart[name].category
             }));
         
             const data = {
