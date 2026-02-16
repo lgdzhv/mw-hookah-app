@@ -226,37 +226,33 @@
         left: 0;
         width: 100%;
         height: 100%;
-        /* ПРИНУДИТЕЛЬНО белый фон, перекрывает тему Telegram */
-        background-color: #ffffff !important;
+        /* Используем системный цвет фона Telegram */
+        background-color: var(--tg-theme-bg-color, #ffffff) !important;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        /* Убеждаемся, что он поверх всего */
-        z-index: 99999 !important; 
+        z-index: 99999;
       }
     
-      /* Стили для крутилки */
       .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #e0e0e0; /* Светло-серый круг */
-        border-top: 5px solid #3390ec; /* Синий цвет Telegram для вращения */
+        width: 45px;
+        height: 45px;
+        border: 4px solid var(--tg-theme-hint-color, #e0e0e0);
+        /* Цвет основной кнопки Telegram для акцента */
+        border-top: 4px solid var(--tg-theme-button-color, #3390ec);
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-bottom: 20px; /* Отступ до текста */
+        animation: spin 1s linear infinite;
       }
     
-      /* Стили для текста */
       #loader p {
-        /* ПРИНУДИТЕЛЬНО черный цвет текста */
-        color: #000000 !important;
-        font-size: 20px !important; /* Сделаем еще крупнее */
-        font-weight: 700 !important; /* Жирный текст */
-        margin: 0 !important;
-        /* Убираем любую возможную прозрачность */
-        opacity: 1 !important;
-        font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+        /* Системный цвет текста Telegram — он сам станет белым в темной теме */
+        color: var(--tg-theme-text-color, #000000) !important;
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 20px;
+        text-align: center;
+        font-family: sans-serif;
       }
     
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
