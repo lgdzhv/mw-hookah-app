@@ -218,9 +218,34 @@
         .category-header.active .category-arrow {
             transform: rotate(180deg);
         }
+
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+          }
+          .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
 </style>
 </head>
 <body>
+    <div id="loader">
+      <div class="spinner"></div>
+      <p>Загружаем меню...</p>
+    </div>
+    
     <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 20px;">
         <button onclick="sendServiceRequest('call')" style="flex: 1; background-color: #f39c12; margin: 0; padding: 10px;">🙋‍♂️ Позвать</button>
         <button onclick="sendServiceRequest('bill')" style="flex: 1; background-color: #27ae60; margin: 0; padding: 10px;">💳 Счет</button>
@@ -270,41 +295,42 @@
         
         // 1. Загрузка меню из Google Таблиц с проверкой пользователя
         async function loadMenu() {
+            // Находим наш лоадер (убедись, что в HTML у него id="loader")
+            const loader = document.getElementById('loader');
+            const menuContainer = document.getElementById('menu-container');
+        
             try {
+                // 1. Показываем лоадер перед началом запроса
+                if (loader) loader.style.display = 'flex';
+                
                 const username = tg.initDataUnsafe.user?.username || "guest";
                 const url = `${GET_MENU_URL}?user=${username}`;
                 
+                // Запрос уходит в n8n на узел Webhook
                 const response = await fetch(url);
                 let menuItems = await response.json();
                 
+                // Пока n8n проходит через If и Google Sheets, лоадер крутится
                 const dataArray = Array.isArray(menuItems) ? menuItems : [menuItems];
-                const menuContainer = document.getElementById('menu-container');
                 menuContainer.innerHTML = ''; 
         
-                // 1. Группируем товары по категориям
+                // Группируем товары
                 const groupedMenu = dataArray.reduce((acc, item) => {
                     const rawData = item.json ? item.json : item;
                     const category = rawData["категория"] || rawData["Категория"] || "Прочее";
-                    
                     if (!acc[category]) acc[category] = [];
                     acc[category].push(rawData);
                     return acc;
                 }, {});
         
-                // 2. Отрисовываем категории и товары внутри них
+                // Отрисовываем категории
                 Object.keys(groupedMenu).forEach((categoryName, index) => {
                     const categoryId = `cat-${index}`;
-                    
-                    // Создаем заголовок категории
                     const header = document.createElement('div');
                     header.className = 'category-header';
-                    header.innerHTML = `
-                        <span>${categoryName}</span>
-                        <span class="category-arrow">▼</span>
-                    `;
+                    header.innerHTML = `<span>${categoryName}</span><span class="category-arrow">▼</span>`;
                     header.onclick = () => toggleCategory(categoryId, header);
                     
-                    // Создаем контейнер для товаров этой категории
                     const content = document.createElement('div');
                     content.id = categoryId;
                     content.className = 'category-content';
@@ -328,8 +354,16 @@
                     menuContainer.appendChild(content);
                 });
         
+                // 2. ПРЯЧЕМ ЛОАДЕР: Данные получены и отрисованы
+                if (loader) loader.style.display = 'none';
+        
             } catch (e) {
                 console.error("Ошибка загрузки меню", e);
+                // В случае ошибки тоже прячем лоадер, чтобы экран не "завис"
+                if (loader) {
+                    loader.style.display = 'none';
+                    menuContainer.innerHTML = '<p style="text-align:center; padding:20px;">Не удалось загрузить меню. Попробуйте обновить страницу.</p>';
+                }
             }
         }
         
